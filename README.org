@@ -1,0 +1,15 @@
+* UNDER DEVELOPMENT
+This program is still in its early phases. Help if appreciated if you somehow landed here and can help.
+
+* Introduction
+Dmon (made to sound like daemon/demon) is a monitoring application. It's supposed to monitor the progress of work across various different processes, independent of whether they are running through a same program or not.
+
+Each process can register they are working, and notify of their progresses through a unique group-id (string). When they register with a group id they are part of, they get a numerical process id, which they'll use along with the group id to report their process. And at the end of their process, they can report they are done. Or in case of failure they can report their failure.
+
+A daemon will keep receiving those reports and save their states.
+
+Other tools could be made which can monitor which groups have active processes and show their progress, TUI or GUI. They can ask the information from the daemon and visualize it.
+
+Some research into it made me think going through dbus is the best choice, I've considered unix sockets, pipes or a internal port for communication. The prototype was made by just writing to files in a common location where the monitoring app would only read and individual processes would only write.
+
+Hopefully I'll learn enough to complete this.
