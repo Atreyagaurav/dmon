@@ -13,3 +13,18 @@ Other tools could be made which can monitor which groups have active processes a
 Some research into it made me think going through dbus is the best choice, I've considered unix sockets, pipes or a internal port for communication. The prototype was made by just writing to files in a common location where the monitoring app would only read and individual processes would only write.
 
 Hopefully I'll learn enough to complete this.
+
+* Individual programs
+
+** Main Daemon
+It'll run in the background and collect all the reports from dbus, it needs to be able to provide the collected information through dbus as well.
+
+For processes that are interrupted or failed without sending failure report. I might have to setup a maximum time to wait, or a command to terminate monitoring certain group/process. Might be better to get process PID as well and check if it's no longer running.
+
+** Reporter
+This should be able to add new processes in group, as well as report their progress and their success failures. And probably as a python library as well as C library.
+
+** Visualizer
+This one will ask the daemon for which groups are active, or visualize just one group. It might be a good idea to make python library for this one too.
+
+Or maybe it all can be made in a single library/executable. Including the daemon.
