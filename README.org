@@ -28,3 +28,13 @@ This should be able to add new processes in group, as well as report their progr
 This one will ask the daemon for which groups are active, or visualize just one group. It might be a good idea to make python library for this one too.
 
 Or maybe it all can be made in a single library/executable. Including the daemon.
+
+* Milestones
+
+** Version 1
+First version should be able to do the followings:
+
+- Get progress from other processes,
+- Visualize progress with multiple bars,
+- some way for the visualizer to know the processes are done. (low priority)
+
