@@ -1,0 +1,3 @@
+[submodule "c_progress"]
+	path = c_progress
+	url = git@github.com:Atreyagaurav/c_progress.git
