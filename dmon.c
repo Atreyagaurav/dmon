@@ -68,7 +68,8 @@ void sendsignal(struct dmon_process* proc)
    
    // free the message and close the connection
    dbus_message_unref(msg);
-   dbus_connection_close(conn);
+   /* dbus_connection_close(conn); */
+   /* terminal warning says don't close it. */
 }
 
 
@@ -156,7 +157,8 @@ void init_dmon_daemon(){
 
 void dmon_close(){
    // close the connection
-   dbus_connection_close(conn);
+   /* dbus_connection_close(conn); */
+   /* says we shouldn't do it... */
 }
 
 
