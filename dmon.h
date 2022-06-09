@@ -7,15 +7,11 @@
 #include <string.h>
 
 
-/* Function to report to daemon. */
-enum process_result{ INPROGRESS, CANCELLED, COMPLETED, FAILED};
-
 struct dmon_process {
   int PID;
   int dmon_id;
   char *group;
   double progress;
-  enum process_result result;
 };
 
 void print_dmon_prc(struct dmon_process* dp);

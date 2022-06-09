@@ -1,7 +1,12 @@
 #include "dmon.h"
+#include "c_progress/c_progress.h"
+#include <stdio.h>
+
+DBusConnection* conn;
+
 
 void print_dmon_prc(struct dmon_process* dp){
-  printf("%s (%d): %.2f%%\n", dp->group, dp->dmon_id, dp->progress*100);
+  printf("%s (%d): %.2f%%\n", dp->group, dp->dmon_id, dp->progress);
 }
 
 void sendsignal(struct dmon_process* proc)
@@ -66,14 +71,57 @@ void sendsignal(struct dmon_process* proc)
    dbus_connection_close(conn);
 }
 
-/* daemon */
-void dmon_daemon(){
+
+struct dmon_process* dmon_get_next(){
    DBusMessage* msg;
    DBusMessageIter args;
-   DBusConnection* conn;
+     // loop listening for signals being emmitted
+   while (true) {
+      // non blocking read of the next available message
+      dbus_connection_read_write(conn, 0);
+      msg = dbus_connection_pop_message(conn);
+
+      // loop again if we haven't read a message
+      if (msg == NULL) { 
+         usleep(1); 		/* TODO need to find optimum value for it to consume less CPU on idle.
+				 And also not have too much delay on reporting.*/
+         continue;
+      }
+
+      // check if the message is a signal from the correct interface and with the correct name
+      if (dbus_message_is_signal(msg, "dmon.Type", "Report")) {
+         
+         // read the parameters
+         if (!dbus_message_iter_init(msg, &args))
+            fprintf(stderr, "Message Has No Parameters\n");
+	 int i, type;
+	 struct dmon_process* dp = malloc(sizeof(struct dmon_process));
+	 
+	 for (i=0; i<3; i++){
+	   type = dbus_message_iter_get_arg_type(&args);
+	   if (type == DBUS_TYPE_STRING){
+	     dbus_message_iter_get_basic(&args, &dp->group);
+	   }else if (type == DBUS_TYPE_UINT32){
+	     dbus_message_iter_get_basic(&args, &dp->dmon_id);
+	   }else if (type == DBUS_TYPE_DOUBLE){
+	     dbus_message_iter_get_basic(&args, &dp->progress);
+	   }
+	   dbus_message_iter_next(&args);
+	 }
+	 // free the message
+	 dbus_message_unref(msg);
+	 return dp;
+      }
+
+      // free the message
+      dbus_message_unref(msg);
+   }
+}
+
+/* daemon */
+void init_dmon_daemon(){
    DBusError err;
    int ret;
-   char* sigvalue;
    
    dbus_error_init(&err);
    conn = dbus_bus_get(DBUS_BUS_SESSION, &err);
@@ -104,46 +152,35 @@ void dmon_daemon(){
    }
    printf("Match rule sent\n");
 
-   // loop listening for signals being emmitted
-   while (true) {
+}
 
-      // non blocking read of the next available message
-      dbus_connection_read_write(conn, 0);
-      msg = dbus_connection_pop_message(conn);
-
-      // loop again if we haven't read a message
-      if (msg == NULL) { 
-         usleep(1); 		/* TODO need to find optimum value for it to consume less CPU on idle.
-				 And also not have too much delay on reporting.*/
-         continue;
-      }
-
-      // check if the message is a signal from the correct interface and with the correct name
-      if (dbus_message_is_signal(msg, "dmon.Type", "Report")) {
-         
-         // read the parameters
-         if (!dbus_message_iter_init(msg, &args))
-            fprintf(stderr, "Message Has No Parameters\n");
-	 int i, type, dmon_id;
-	 double prog;
-	 
-	 for (i=0; i<3; i++){
-	   type = dbus_message_iter_get_arg_type(&args);
-	   if (type == DBUS_TYPE_STRING){
-	     dbus_message_iter_get_basic(&args, &sigvalue);
-	   }else if (type == DBUS_TYPE_UINT32){
-	     dbus_message_iter_get_basic(&args, &dmon_id);
-	   }else if (type == DBUS_TYPE_DOUBLE){
-	     dbus_message_iter_get_basic(&args, &prog);
-	   }
-	   dbus_message_iter_next(&args);
-	 }
-         printf("%s (%d): %.2f%%\n", sigvalue, dmon_id, prog*100);
-      }
-
-      // free the message
-      dbus_message_unref(msg);
-   }
+void dmon_close(){
    // close the connection
    dbus_connection_close(conn);
+}
+
+
+void dmon_daemon(int num_procs){
+  struct dmon_process *dp;
+  struct progress_bar *pb;
+  char error[200];
+  
+  init_dmon_daemon();
+  init_progress_bars(num_procs, 1, 100, 200, 1);
+  while (1) {
+    dp = dmon_get_next();
+    if (dp->dmon_id < 0 || dp->dmon_id >= num_procs){
+      sprintf(error, "Process not Found: %.2f%% (gp:%s; id:%d)",dp->progress, dp->group, dp->dmon_id);
+      update_status(0, error);
+      print_all_progress();
+      continue;
+    }
+    pb = get_progress_bar(dp->dmon_id);
+    if (pb->status == QUEUED){
+      start_progress_bar(pb->index, dp->group); /* using group as label for now. */
+    }
+    update_progress_bar(dp->dmon_id, dp->progress);
+    print_all_progress();
+  }
+  dmon_close();
 }
