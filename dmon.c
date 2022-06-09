@@ -1,32 +1,8 @@
-#define DBUS_API_SUBJECT_TO_CHANGE
-#include <dbus/dbus.h>
-#include <stdbool.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-
-/* Function to report to daemon. */
-enum process_result{ INPROGRESS, CANCELLED, COMPLETED, FAILED};
-
-struct dmon_process {
-  int PID;
-  int dmon_id;
-  char *group;
-  double progress;
-  enum process_result result;
-};
+#include "dmon.h"
 
 void print_dmon_prc(struct dmon_process* dp){
   printf("%s (%d): %.2f%%\n", dp->group, dp->dmon_id, dp->progress*100);
 }
-
-int dmon_register_new(char* group, char* label);
-
-int dmon_report_progress(char* group, int proc_id, double progress);
-
-int dmon_report_result(char* group, int proc_id, enum process_result result);
 
 void sendsignal(struct dmon_process* proc)
 {
@@ -170,19 +146,4 @@ void dmon_daemon(){
    }
    // close the connection
    dbus_connection_close(conn);
-}
-
-int main(int argc, char *argv[])
-{
-  if (argc<2)  dmon_daemon();
-  else {
-  struct dmon_process dp;
-  dp.PID = 0;
-  dp.group = argv[1];
-  dp.dmon_id = atoi(argv[2]);
-  dp.progress = atof(argv[3]);
-  print_dmon_prc(&dp);
-  sendsignal(&dp);
-  }
-  return 0;
 }
