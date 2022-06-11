@@ -29,6 +29,8 @@ This one will ask the daemon for which groups are active, or visualize just one 
 
 Or maybe it all can be made in a single library/executable. Including the daemon.
 
+It uses a program I made ([[https://github.com/Atreyagaurav/c_progress][c_progress]]) for printing the multiple bars to the terminal.
+
 * Milestones
 
 ** Version 0.1

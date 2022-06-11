@@ -184,9 +184,10 @@ void dmon_daemon(int num_procs){
     update_progress_bar(dp->dmon_id, dp->progress);
     sprintf(error, "Last Signal: %.2f%% (gp:%s; id:%d)",dp->progress, dp->group, dp->dmon_id);
     update_status(0, error);
-    print_all_progress();
     if (dp->progress >= 100.0){
-      pb->status = COMPLETED;
+      mark_bar_completed(dp->dmon_id);
+    }else{
+      print_all_progress();
     }
   }
   dmon_close();
